@@ -64,7 +64,7 @@ class MFSN_Options_Page {
 	 */
 	function admin_menu() {
 		add_menu_page(
-			__( 'Display Sitewide Notification', 'mfsn' ),
+			__( 'Display Sitewide Notice', 'mfsn' ),
 			__( 'Sitewide Notice', 'mfsn' ),
 			'manage_options',
 			'mfsn',
@@ -94,7 +94,7 @@ class MFSN_Options_Page {
 
 		add_settings_field(
 			'mfsn_enable',
-			__( 'Display Notification Sitewide?', 'mfsn' ),
+			__( 'Display Notice Sitewide?', 'mfsn' ),
 			array(
 				$this,
 				'enable_field_render'
@@ -104,7 +104,7 @@ class MFSN_Options_Page {
 		);
 		add_settings_field(
 			'mfsn_message',
-			__( 'Notification Text', 'mfsn' ),
+			__( 'Notice Text', 'mfsn' ),
 			array(
 				$this,
 				'notification_field_render'
@@ -140,9 +140,6 @@ class MFSN_Options_Page {
 		<?php
 	}
 	function settings_section_callback() {
-		echo '<hr>';
-		MFSN::display();
-		echo '<hr>';
 	}
 	function enable_field_render() {
 		$options = get_option( 'mfsn_options' );

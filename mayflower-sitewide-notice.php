@@ -6,7 +6,7 @@
  * Author:          Bellevue College IT Services
  * Author URI:      https://www.bellevuecollege.edu/
  * Text Domain:     mfsn
- * Version:         0.0.0
+ * Version:         1
  *
  * @package         Mayflower_Sitewide_Notice
  */

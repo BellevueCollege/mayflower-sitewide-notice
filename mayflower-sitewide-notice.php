@@ -6,7 +6,7 @@
  * Author:          Bellevue College IT Services
  * Author URI:      https://www.bellevuecollege.edu/
  * Text Domain:     mfsn
- * Version:         1
+ * Version:         1.1
  *
  * @package         Mayflower_Sitewide_Notice
  */
@@ -66,7 +66,7 @@ class MFSN_Options_Page {
 		add_menu_page(
 			__( 'Display Sitewide Notice', 'mfsn' ),
 			__( 'Sitewide Notice', 'mfsn' ),
-			'manage_options',
+			'edit_pages',
 			'mfsn',
 			array(
 				$this,

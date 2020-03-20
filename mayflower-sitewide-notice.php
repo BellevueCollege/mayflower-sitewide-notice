@@ -6,7 +6,7 @@
  * Author:          Bellevue College IT Services
  * Author URI:      https://www.bellevuecollege.edu/
  * Text Domain:     mfsn
- * Version:         1.1
+ * Version:         1.2
  *
  * @package         Mayflower_Sitewide_Notice
  */
@@ -19,14 +19,13 @@
 class MFSN {
 
 	public static function active() {
-		$options = get_option( 'mfsn_options' );
-		if ( 'on' === $options['mfsn_enable'] && '' !== $options['mfsn_source'] ) {
-			$src_options = get_blog_option( $options['mfsn_source'], 'mfsn_options' );
-			if ( 'on' === $src_options['mfsn_enable'] ) {
+		if ( 'on' === get_option( 'mfsn_enable' ) && '' !== get_option( 'mfsn_source' ) ) {
+			$src_site = get_option( 'mfsn_source' );
+			if ( 'on' === get_blog_option( $src_site, 'mfsn_enable' ) ) {
 				return true;
 			}
 
-		} elseif ( 'on' === $options['mfsn_enable'] ) {
+		} elseif ( 'on' === get_option( 'mfsn_enable' ) ) {
 			return true;
 		} else {
 			return false;
@@ -34,16 +33,14 @@ class MFSN {
 	}
 
 	public static function display() {
-		$options = get_option( 'mfsn_options' );
-
-		if ( 'on' === $options['mfsn_enable'] && '' !== $options['mfsn_source'] ) {
-			$src_options = get_blog_option( $options['mfsn_source'], 'mfsn_options' );
-			if ( 'on' === $src_options['mfsn_enable'] ) {
-				echo apply_filters( 'the_content', $src_options['mfsn_message'] );
+		if ( 'on' === get_option( 'mfsn_enable' ) && '' !== get_option( 'mfsn_source' ) ) {
+			$src_site = get_option( 'mfsn_source' );
+			if ( 'on' === get_blog_option( $src_site, 'mfsn_enable' ) ) {
+				echo apply_filters( 'the_content', get_blog_option( get_option( 'mfsn_source' ), 'mfsn_message' ) );
 			}
 
 		} elseif ( 'on' === $options['mfsn_enable'] ) {
-			echo apply_filters( 'the_content', $options['mfsn_message'] );
+			echo apply_filters( 'the_content', get_option( 'mfsn_message' ) );
 		}
 	}
 
@@ -54,9 +51,7 @@ class MFSN_Options_Page {
 	 * Constructor.
 	 */
 	function __construct() {
-		add_action( 'admin_init', array( $this, 'settings') );
 		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
-
 	}
 
 	/**
@@ -76,116 +71,95 @@ class MFSN_Options_Page {
 		);
 	}
 
-	function settings() {
-		register_setting(
-			'mfsn',
-			'mfsn_options'
-		);
-
-		add_settings_section(
-			'mfsn_section',
-			'Sitewide Notice Settings',
-			array(
-				$this,
-				'settings_section_callback'
-			),
-			'mfsn'
-		);
-
-		add_settings_field(
-			'mfsn_enable',
-			__( 'Display Notice Sitewide?', 'mfsn' ),
-			array(
-				$this,
-				'enable_field_render'
-			),
-			'mfsn',
-			'mfsn_section'
-		);
-		add_settings_field(
-			'mfsn_message',
-			__( 'Notice Text', 'mfsn' ),
-			array(
-				$this,
-				'notification_field_render'
-			),
-			'mfsn',
-			'mfsn_section'
-		);
-		add_settings_field(
-			'mfsn_source',
-			__( 'Source Site ID (Optional)', 'mfsn' ),
-			array(
-				$this,
-				'source_field_render'
-			),
-			'mfsn',
-			'mfsn_section'
-		);
-	}
-
 	/**
 	 * Settings page display callback.
 	 */
 	function settings_page_callback() {
+
+		if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+			if (!current_user_can('edit_pages')) {
+				wp_die('Unauthorized user!');
+			}
+
+			check_admin_referer( 'mfsn_nonce' );
+			
+			$value = $_POST['mfsn_enable'] === 'on' ? 'on' : '';
+			update_option( 'mfsn_enable', $value );
+
+			if (isset($_POST['mfsn_message'])) {
+				$value = wp_kses_post( $_POST['mfsn_message'] );
+				update_option( 'mfsn_message', $value );
+			}
+			if (isset($_POST['mfsn_source'])) {
+				$value = $_POST['mfsn_source'] !== '0' ? intval($_POST['mfsn_source']) : '' ;
+				update_option( 'mfsn_source', $value );
+			}
+		}
 		?>
-		<form action='options.php' method='post'>	
-			<?php
-			settings_fields( 'mfsn' );
-			do_settings_sections( 'mfsn' );
-			submit_button();
-			?>
-	
+		<form method='post'>
+			<?php wp_nonce_field( 'mfsn_nonce' ); ?>
+			<h2>Sitewide Notice Settings</h2>
+			<table class="form-table" role="presentation">
+				<tbody>
+					<tr>
+						<th scope="row"><label for='mfsn_enable'>Notice Sitewide?</label></th>
+						<td scope="row">
+							<input type='checkbox' id="mfsn_enable" name="mfsn_enable" <?php echo get_option( 'mfsn_enable' ) === 'on' ? 'checked' : ''; ?>>
+						</td>
+					</tr>
+
+					<tr>
+						<th scope="row"><label for='mfsn_message'>Notice Text</label></th>
+						<td scope="row">
+							<?php
+							wp_editor(
+								get_option( 'mfsn_message' ),
+								'mfsn_message',
+								array(
+									'textarea_name' => 'mfsn_message',
+									'wpautop' => true,
+									'tinymce' => array(
+										'quicktags' => array( 'buttons' => 'strong,em,del,ul,ol,li,close' ),
+									)
+								)
+							);
+							?>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for='mfsn_source'>Source Site ID (optional)</label></th>
+						<td scope="row">
+							<?php
+							$sites = get_sites(
+								array(
+									'number'  => '10000', //Arbitrary high number of sites.
+									'orderby' => 'path',
+									'public'  => 1,
+								)
+							);
+							?>
+							<select id="mfsn_source" name="mfsn_source">
+								<option value='' <?php echo '' === get_option( 'mfsn_source' ) ? 'selected="true"' : '' ?>>[none]</option>
+								<?php
+									foreach( $sites as $site ) {
+										?>
+										<option value='<?php echo $site->blog_id ?>' <?php echo $site->blog_id === (string)get_option( 'mfsn_source' ) ? 'selected="true"' : '' ?>><?php echo $site->path ?></option>
+										<?php
+									}
+								?>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td><input type="submit" value="Save" class="button button-primary button-large"></td>
+					</tr>
+				</tbody>
+			</table>
 		</form>
 		<?php
 	}
-	function settings_section_callback() {
-	}
-	function enable_field_render() {
-		$options = get_option( 'mfsn_options' );
-		?>
-			<input type='checkbox' name="mfsn_options[mfsn_enable]" <?php echo $options['mfsn_enable'] === 'on' ? 'checked' : ''; ?>>
-
-		<?php
-	}
-	function notification_field_render() {
-		$options = get_option( 'mfsn_options' );
-
-		wp_editor(
-			$options['mfsn_message'],
-			'mfsn_options-mfsn_message',
-			array(
-				'textarea_name' => 'mfsn_options[mfsn_message]',
-				'wpautop' => true,
-				'tinymce' => array(
-					'quicktags' => array( 'buttons' => 'strong,em,del,ul,ol,li,close' ),
-				)
-			)
-		);
-	}
-	function source_field_render() {
-		$sites = get_sites(
-			array(
-				'number'  => '10000', //Arbitrary high number of sites.
-				'orderby' => 'path',
-				'public'  => 1,
-			)
-		);
-		$options = get_option( 'mfsn_options' );
-		?>
-			<select name="mfsn_options[mfsn_source]">
-			<option value='' <?php echo '' === $options['mfsn_source'] ? 'selected="true"' : '' ?>>[none]</option>
-				<?php
-					foreach( $sites as $site ) {
-						?>
-						<option value='<?php echo $site->blog_id ?>' <?php echo $site->blog_id === $options['mfsn_source'] ? 'selected="true"' : '' ?>><?php echo $site->path ?></option>
-						<?php
-					}
-				?>
-			</select>
-
-		<?php
-	}
+	
 }
 
 new MFSN_Options_Page;

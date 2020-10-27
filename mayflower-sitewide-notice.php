@@ -6,7 +6,7 @@
  * Author:          Bellevue College IT Services
  * Author URI:      https://www.bellevuecollege.edu/
  * Text Domain:     mfsn
- * Version:         1.2
+ * Version:         1.2.1
  *
  * @package         Mayflower_Sitewide_Notice
  */
@@ -36,11 +36,11 @@ class MFSN {
 		if ( 'on' === get_option( 'mfsn_enable' ) && '' !== get_option( 'mfsn_source' ) ) {
 			$src_site = get_option( 'mfsn_source' );
 			if ( 'on' === get_blog_option( $src_site, 'mfsn_enable' ) ) {
-				echo apply_filters( 'the_content', get_blog_option( get_option( 'mfsn_source' ), 'mfsn_message' ) );
+				echo apply_filters( 'the_content', stripslashes( get_blog_option( get_option( 'mfsn_source' ), 'mfsn_message' ) ) );
 			}
 
 		} elseif ( 'on' === $options['mfsn_enable'] ) {
-			echo apply_filters( 'the_content', get_option( 'mfsn_message' ) );
+			echo apply_filters( 'the_content', stripslashes( get_option( 'mfsn_message' ) ) );
 		}
 	}
 
@@ -113,7 +113,7 @@ class MFSN_Options_Page {
 						<td scope="row">
 							<?php
 							wp_editor(
-								get_option( 'mfsn_message' ),
+								stripslashes( get_option( 'mfsn_message' ) ),
 								'mfsn_message',
 								array(
 									'textarea_name' => 'mfsn_message',
